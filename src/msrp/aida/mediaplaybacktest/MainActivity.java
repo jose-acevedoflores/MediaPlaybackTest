@@ -11,7 +11,10 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.Context;
 import android.database.Cursor;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.TextView;
@@ -20,6 +23,7 @@ public class MainActivity extends Activity {
 	
 	private MediaPlayer player;
 	private TextView tv;
+	private TelephonyManager tm;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +32,7 @@ public class MainActivity extends Activity {
 		
 		player = new MediaPlayer();
 		tv = (TextView) findViewById(R.id.tvMain);
+		tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		
 		ContentResolver cr = this.getContentResolver();
 		
@@ -65,6 +70,8 @@ public class MainActivity extends Activity {
 		    String songTitle = title.get(rand);
 		    
 		    Uri songUri = ContentUris.withAppendedId(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, thisId);
+		    
+		    tm.listen(new MyPhoneStateListener() , PhoneStateListener.LISTEN_CALL_STATE);
 		    
 		    player.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		    
@@ -116,11 +123,22 @@ public class MainActivity extends Activity {
 		player.stop();
 		player.release();
 		player = null;
+		//tm = null;
 		Log.d("debug", "Destroyed");
 		super.onDestroy();
 	}
 
 	
-	
+	class MyPhoneStateListener extends PhoneStateListener
+	{
+		@Override
+		public void onCallStateChanged(int state, String incomingNumber)
+		{
+			System.out.println("incoming number: " + incomingNumber);
+			if(state == TelephonyManager.CALL_STATE_RINGING)
+				Log.d("DEBUG", "Ringing");
+			super.onCallStateChanged(state, incomingNumber);
+		}
+	}
 	
 }
